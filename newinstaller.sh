@@ -7,7 +7,7 @@
 # collage optimised for UK species.  Run as a non-root user with
 # passwordless sudo:
 #
-#   curl -s https://raw.githubusercontent.com/Twarner491/AvianVisitors-UK/main/newinstaller.sh | bash
+#   curl -s https://raw.githubusercontent.com/iansblog/AvianVisitors-UK/main/newinstaller.sh | bash
 
 set -e
 
@@ -54,7 +54,7 @@ fi
 
 # Clone into the standard BirdNET-Pi directory (upstream scripts hardcode this path)
 INSTALL_DIR="${HOME}/BirdNET-Pi"
-REPO_URL="https://github.com/Twarner491/AvianVisitors-UK.git"
+REPO_URL="https://github.com/iansblog/AvianVisitors-UK.git"
 BRANCH="main"
 
 if [ -d "$INSTALL_DIR" ]; then

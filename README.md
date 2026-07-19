@@ -35,7 +35,7 @@ Optional: an [eBird API key](https://ebird.org/api/keygen) to filter species by 
 
 ```bash
 ssh <your-username>@birdnet.local
-curl -s https://raw.githubusercontent.com/Twarner491/AvianVisitors-UK/main/newinstaller.sh | bash
+curl -s https://raw.githubusercontent.com/iansblog/AvianVisitors-UK/main/newinstaller.sh | bash
 ```
 
 This clones the repo, installs BirdNET-Pi, sets up all services, and reboots. Takes 20-40 minutes on a Pi 4.
