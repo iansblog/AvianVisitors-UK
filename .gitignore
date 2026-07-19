@@ -1,0 +1,47 @@
+# AvianVisitors-UK
+# ==================
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+/nbproject/private/
+
+# Python
+*.pyc
+__pycache__/
+birdnet/                    # venv, created at install time
+avian/scripts/.venv/        # local working venv for illustration tools
+
+# BirdNET-Pi generated data (created at runtime / install)
+model/labels.txt            # downloaded during install
+model/labels_flickr.txt     # generated from labels
+datasets/
+birdnet.conf
+firstrun.ini
+body.txt
+BirdDB.txt
+IdentifiedSoFar.txt
+IdentifiedSoFar.txt.bak
+Birders_Guide_Installer_Configuration.txt
+exclude_species_list.txt
+include_species_list.txt
+whitelist_species_list.txt
+analyzing_now.txt
+apprise.txt
+HUMAN.txt
+templates/*.service         # generated at install time
+scripts/*.txt               # runtime data
+scripts/*.db                # runtime database
+*.flac                      # audio recordings
+
+# Large binaries downloaded at install
+tflite_runtime-*.whl
+
+# Local-only material, deliberately not shipped
+.claude/
+avian/assets/references/    # source/reference imagery
+avian/assets/_legacy/       # superseded assets
+avian/scripts/pregen.log    # generation log
+avian/scripts/species-notes.json  # local working notes
