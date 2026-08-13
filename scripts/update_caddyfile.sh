@@ -52,9 +52,7 @@ http:// ${BIRDNETPI_URL} {
   php_fastcgi unix/${FPM_SOCK} {
     try_files {path} {path}/index.html {path}/index.php index.php
     # AI illustration generation can take up to 3 minutes
-    transport fastcgi {
-      read_timeout 180s
-    }
+    read_timeout 180s
   }
   reverse_proxy /log* localhost:8080
   reverse_proxy /stats* localhost:8501
@@ -80,9 +78,7 @@ http:// ${BIRDNETPI_URL} {
   php_fastcgi unix/${FPM_SOCK} {
     try_files {path} {path}/index.html {path}/index.php index.php
     # AI illustration generation can take up to 3 minutes
-    transport fastcgi {
-      read_timeout 180s
-    }
+    read_timeout 180s
   }
   reverse_proxy /log* localhost:8080
   reverse_proxy /stats* localhost:8501
