@@ -72,13 +72,21 @@ login user (usually `pi`) already has this on stock Raspberry Pi OS. To check:
 sudo -K && sudo -n true && echo "passwordless sudo OK"
 ```
 
-If it prints nothing or errors, grant your user passwordless sudo by running
-as root (`sudo -i`) once:
+If it prints nothing or errors, enable it with the Raspberry Pi config tool:
 
 ```bash
-# Replace 'pi' with your username
-echo "pi ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010_pi-nopasswd
-chmod 0440 /etc/sudoers.d/010_pi-nopasswd
+sudo raspi-config
+```
+
+Then navigate to **System Options → S10 Admin Password → Yes** to disable the
+sudo password prompt. Selecting **Yes** answers "Would you like the admin
+(sudo) password to be enabled?" with **No**, which installs a passwordless
+sudo rule for your user.
+
+To do it without the menu:
+
+```bash
+sudo raspi-config nonint do_sudo_pass 1
 ```
 
 Log out and back in, then confirm the check above succeeds before installing.
