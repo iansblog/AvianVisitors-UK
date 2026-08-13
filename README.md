@@ -13,7 +13,7 @@ An acoustic bird monitor for the Raspberry Pi that identifies UK birds in real t
 - **Listens** via a USB microphone and identifies bird species using BirdNET machine learning
 - **Displays** a live collage of detected birds as Edo-period Japanese woodblock style illustrations
 - **Ships with 1245 bundled illustrations** (726 perched + 519 flight poses) covering common UK species
-- **On-demand generation**: species without bundled illustrations get a new one generated automatically via free AI image APIs (no API key needed) — enabled by default on boards with ≥2 GB RAM
+- **On-demand generation**: species without bundled illustrations get a new one generated automatically via free AI image APIs (no API key needed) — works on every supported board, since generation happens in the cloud
 - **Runs offline** for all core BirdNET functionality — only the optional illustration generation needs internet
 
 ---
@@ -22,12 +22,12 @@ An acoustic bird monitor for the Raspberry Pi that identifies UK birds in real t
 
 | Device | RAM | BirdNET analysis | On-demand AI illustrations | Notes |
 |--------|-----|------------------|----------------------------|-------|
-| **Raspberry Pi 5** | 4–16 GB | Fast | **Enabled** by default | Recommended |
-| **Raspberry Pi 4** (≥2 GB) | 2–8 GB | Fast | **Enabled** by default | Recommended |
-| **Raspberry Pi 4** (1 GB) | 1 GB | Works | Disabled — opt-in | zram + swap auto-enabled |
-| **Raspberry Pi 3B / 3B+** | 1 GB | Slow but works | Disabled — opt-in | zram + swap auto-enabled |
-| **Raspberry Pi 3A+ / Zero 2W** | 512 MB–1 GB | Slow but works | Disabled — opt-in | zram + swap auto-enabled |
-| x86_64 PC / VM | any | Fast | Enabled by default | For testing, not a real deployment |
+| **Raspberry Pi 5** | 4–16 GB | Fast | **Enabled** | Recommended |
+| **Raspberry Pi 4** (≥2 GB) | 2–8 GB | Fast | **Enabled** | Recommended |
+| **Raspberry Pi 4** (1 GB) | 1 GB | Works | **Enabled** (rembg auto-skips) | zram + swap auto-enabled |
+| **Raspberry Pi 3B / 3B+** | 1 GB | Slow but works | **Enabled** (rembg auto-skips) | zram + swap auto-enabled |
+| **Raspberry Pi 3A+ / Zero 2W** | 512 MB–1 GB | Slow but works | **Enabled** (rembg auto-skips) | zram + swap auto-enabled |
+| x86_64 PC / VM | any | Fast | **Enabled** | For testing, not a real deployment |
 
 ### Limitations
 
@@ -35,10 +35,10 @@ An acoustic bird monitor for the Raspberry Pi that identifies UK birds in real t
   there is no tflite wheel for 32-bit ARM on Python 3.10+. The installer
   detects this and tells you to reinstall with the 64-bit Raspberry Pi OS
   image (Pi 3, 4, and 5 all support it).
-- **Pi 3 / 1 GB boards**: on-demand AI illustration generation is disabled by
-  default. rembg needs ~500 MB on top of the running BirdNET services and can
-  OOM a 1 GB board. The 1245 bundled illustrations still work — set
-  `GENERATE_ILLUSTRATIONS=1` in `birdnet.conf` to opt in (not recommended).
+- **AI generation is cloud-side, so it works on every board** — free.ai does
+  the rendering. Only the background removal (rembg) runs locally, and it
+  auto-skips when free RAM drops below ~500 MB, serving the raw cream render
+  instead. On 1 GB boards you may see renders with the cream background.
 - **Pi 3 analysis speed**: the Cortex-A53 processes audio slower than
   real-time. Expect detection latency and occasional backlog on the busiest
   garden mornings; consider a shorter `RECORDING_LENGTH` if it falls behind.
@@ -107,8 +107,8 @@ See [`avian/scripts/README.md`](avian/scripts/README.md) for the full illustrati
 4. As a final fallback, it generates a fresh kachō-e illustration via free.ai (no API key needed)
 5. The result is cached for instant serving on future requests
 
-Steps 3–4 are gated by `GENERATE_ILLUSTRATIONS` in `birdnet.conf` (defaults to
-`0` on low-RAM boards, `1` elsewhere — see [Supported devices](#supported-devices)).
+Steps 3–4 are gated by `GENERATE_ILLUSTRATIONS` in `birdnet.conf` (enabled on
+all boards; rembg skips itself when free RAM is low).
 
 The collage JavaScript (`avian/frontend/apt.js`) lays out detected birds on a cream/dark paper background using the pose masks.
 

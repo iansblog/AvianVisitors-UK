@@ -86,15 +86,15 @@ if [ -n "$PACKAGES_MISSING" ]; then
   sudo apt-get -y install $PACKAGES_MISSING
 fi
 
-# < 2 GB RAM (Pi 3 / Zero 2W): enable zram + swap and keep the heavy
-# on-demand AI generation disabled so rembg cannot OOM the system.
-# Users can opt back in via GENERATE_ILLUSTRATIONS=1 in birdnet.conf.
+# < 2 GB RAM (Pi 3 / Zero 2W): enable zram + swap so the analysis service
+# has headroom. AI illustration generation is cloud-based and works on all
+# boards - rembg (the only local part) auto-skips when RAM is low.
 export LOW_RAM=0
 if [ "$TOTAL_RAM_MB" -lt 2048 ]; then
   export LOW_RAM=1
   echo "Detected ${TOTAL_RAM_MB} MB RAM."
-  echo "Enabling zram + swap and disabling on-demand AI illustration"
-  echo "generation (set GENERATE_ILLUSTRATIONS=1 in birdnet.conf to re-enable)."
+  echo "Enabling zram + swap. AI illustration generation stays enabled -"
+  echo "rembg will skip automatically if memory gets tight."
   echo ""
 fi
 
@@ -129,9 +129,10 @@ if [ ${PIPESTATUS[0]} -eq 0 ]; then
     fi
   fi
 
-  # Set up the illustration venv (rembg + Pillow) unless low-RAM. The
-  # system python is PEP 668 managed on Bookworm+, so a venv is required.
-  if [ "$LOW_RAM" != "1" ] && [ -f "$INSTALL_DIR/avian/scripts/requirements.txt" ]; then
+  # Set up the illustration venv (rembg + Pillow) on every board - the AI
+  # generation is cloud-side, rembg only runs locally when RAM allows.
+  # The system python is PEP 668 managed on Bookworm+, so a venv is required.
+  if [ -f "$INSTALL_DIR/avian/scripts/requirements.txt" ]; then
     echo "Setting up illustration venv (rembg + onnxruntime)..."
     if [ ! -d "$INSTALL_DIR/avian/scripts/.venv" ]; then
       python3 -m venv "$INSTALL_DIR/avian/scripts/.venv"
