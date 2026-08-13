@@ -2,6 +2,10 @@
 
 *A live bird collage for UK gardens, powered by BirdNET.*
 
+> **⚠️ Under active development.** This is a work-in-progress hobby project.
+> Things may break, change, or be half-finished. Please don't judge it as a
+> finished product — if something doesn't work, [open an issue](https://github.com/iansblog/AvianVisitors-UK/issues) rather than assuming it's broken forever.
+
 An acoustic bird monitor for the Raspberry Pi that identifies UK birds in real time and displays them as a growing collage of Japanese kachō-e style illustrations. Built on [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET-Pi) with the [AvianVisitors](https://github.com/Twarner491/AvianVisitors) collage overlay.
 
 <img alt="AvianVisitors-UK collage" src="docs/thumb.png" />

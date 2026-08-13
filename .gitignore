@@ -11,12 +11,14 @@
 # Python
 *.pyc
 __pycache__/
-birdnet/                    # venv, created at install time
-avian/scripts/.venv/        # local working venv for illustration tools
+
+# venvs, created at install time
+birdnet/
+avian/scripts/.venv/
 
 # BirdNET-Pi generated data (created at runtime / install)
-model/labels.txt            # downloaded during install
-model/labels_flickr.txt     # generated from labels
+model/labels.txt
+model/labels_flickr.txt
 datasets/
 birdnet.conf
 firstrun.ini
@@ -31,16 +33,22 @@ whitelist_species_list.txt
 analyzing_now.txt
 apprise.txt
 HUMAN.txt
-templates/*.service         # generated at install time
-scripts/*.txt               # runtime data
-scripts/*.db                # runtime database
-*.flac                      # audio recordings
+
+# generated at install time
+templates/*.service
+templates/*.mount
+installation-*.txt
+
+# runtime data
+scripts/*.txt
+scripts/*.db
+*.flac
 
 # Large binaries downloaded at install
 tflite_runtime-*.whl
 
 # Local-only material, deliberately not shipped
 .claude/
-avian/assets/references/    # source/reference imagery
-avian/assets/_legacy/       # superseded assets
-avian/scripts/pregen.log    # generation log
+avian/assets/references/
+avian/assets/_legacy/
+avian/scripts/pregen.log
