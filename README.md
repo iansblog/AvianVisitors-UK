@@ -63,6 +63,28 @@ Optional: an [eBird API key](https://ebird.org/api/keygen) to filter species by 
 
 ---
 
+## Pre-requisites
+
+The installer must run as a **non-root user with passwordless sudo**. Your
+login user (usually `pi`) already has this on stock Raspberry Pi OS. To check:
+
+```bash
+sudo -K && sudo -n true && echo "passwordless sudo OK"
+```
+
+If it prints nothing or errors, grant your user passwordless sudo by running
+as root (`sudo -i`) once:
+
+```bash
+# Replace 'pi' with your username
+echo "pi ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010_pi-nopasswd
+chmod 0440 /etc/sudoers.d/010_pi-nopasswd
+```
+
+Log out and back in, then confirm the check above succeeds before installing.
+
+---
+
 ## Quick install
 
 ```bash
