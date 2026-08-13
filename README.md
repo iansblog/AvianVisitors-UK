@@ -13,8 +13,40 @@ An acoustic bird monitor for the Raspberry Pi that identifies UK birds in real t
 - **Listens** via a USB microphone and identifies bird species using BirdNET machine learning
 - **Displays** a live collage of detected birds as Edo-period Japanese woodblock style illustrations
 - **Ships with 1245 bundled illustrations** (726 perched + 519 flight poses) covering common UK species
-- **On-demand generation**: species without bundled illustrations get a new one generated automatically via free AI image APIs (no API key needed)
+- **On-demand generation**: species without bundled illustrations get a new one generated automatically via free AI image APIs (no API key needed) — enabled by default on boards with ≥2 GB RAM
 - **Runs offline** for all core BirdNET functionality — only the optional illustration generation needs internet
+
+---
+
+## Supported devices
+
+| Device | RAM | BirdNET analysis | On-demand AI illustrations | Notes |
+|--------|-----|------------------|----------------------------|-------|
+| **Raspberry Pi 5** | 4–16 GB | Fast | **Enabled** by default | Recommended |
+| **Raspberry Pi 4** (≥2 GB) | 2–8 GB | Fast | **Enabled** by default | Recommended |
+| **Raspberry Pi 4** (1 GB) | 1 GB | Works | Disabled — opt-in | zram + swap auto-enabled |
+| **Raspberry Pi 3B / 3B+** | 1 GB | Slow but works | Disabled — opt-in | zram + swap auto-enabled |
+| **Raspberry Pi 3A+ / Zero 2W** | 512 MB–1 GB | Slow but works | Disabled — opt-in | zram + swap auto-enabled |
+| x86_64 PC / VM | any | Fast | Enabled by default | For testing, not a real deployment |
+
+### Limitations
+
+- **64-bit OS required** — 32-bit (armv7l) installs are not supported because
+  there is no tflite wheel for 32-bit ARM on Python 3.10+. The installer
+  detects this and tells you to reinstall with the 64-bit Raspberry Pi OS
+  image (Pi 3, 4, and 5 all support it).
+- **Pi 3 / 1 GB boards**: on-demand AI illustration generation is disabled by
+  default. rembg needs ~500 MB on top of the running BirdNET services and can
+  OOM a 1 GB board. The 1245 bundled illustrations still work — set
+  `GENERATE_ILLUSTRATIONS=1` in `birdnet.conf` to opt in (not recommended).
+- **Pi 3 analysis speed**: the Cortex-A53 processes audio slower than
+  real-time. Expect detection latency and occasional backlog on the busiest
+  garden mornings; consider a shorter `RECORDING_LENGTH` if it falls behind.
+- **On-demand generation needs internet** — everything else (detection,
+  collage, web UI) runs fully offline.
+- **Free tier rate limits** — free.ai and Wikipedia apply rate limits; the
+  generator retries with exponential backoff, so first-time renders can take
+  up to ~2 minutes.
 
 ---
 
@@ -22,20 +54,10 @@ An acoustic bird monitor for the Raspberry Pi that identifies UK birds in real t
 
 | Qty | Item | Notes |
 |-----|------|-------|
-| 1 | Raspberry Pi (3, 4, or 5) | 64-bit OS required |
+| 1 | Raspberry Pi (3, 4, or 5) — see [Supported devices](#supported-devices) | 64-bit OS required |
 | 1 | Micro SD card (≥32 GB) | |
 | 1 | USB lavalier microphone | Place in a window or mount outside |
 | 1 | Pi power supply | |
-
-**Hardware notes**
-- **Pi 5 / Pi 4 (≥2 GB RAM)**: full experience — on-demand AI illustration
-  generation enabled, zram sized automatically.
-- **Pi 3 / Pi 4 1 GB / Zero 2W**: works, but the installer automatically
-  enables zram + swap and disables on-demand AI illustration generation
-  (rembg needs memory the Pi 3 can't spare). You still get the 1245 bundled
-  illustrations; set `GENERATE_ILLUSTRATIONS=1` in `birdnet.conf` to opt in.
-- **32-bit OS is not supported** (no tflite wheel for armv7l). Reinstall with
-  the 64-bit Raspberry Pi OS image — the installer will tell you if you forget.
 
 Optional: an [eBird API key](https://ebird.org/api/keygen) to filter species by region.
 
@@ -84,6 +106,9 @@ See [`avian/scripts/README.md`](avian/scripts/README.md) for the full illustrati
 3. If nothing is cached, it fetches a Wikipedia photo and removes the background with rembg
 4. As a final fallback, it generates a fresh kachō-e illustration via free.ai (no API key needed)
 5. The result is cached for instant serving on future requests
+
+Steps 3–4 are gated by `GENERATE_ILLUSTRATIONS` in `birdnet.conf` (defaults to
+`0` on low-RAM boards, `1` elsewhere — see [Supported devices](#supported-devices)).
 
 The collage JavaScript (`avian/frontend/apt.js`) lays out detected birds on a cream/dark paper background using the pose masks.
 
