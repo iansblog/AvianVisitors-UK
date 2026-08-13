@@ -22,10 +22,20 @@ An acoustic bird monitor for the Raspberry Pi that identifies UK birds in real t
 
 | Qty | Item | Notes |
 |-----|------|-------|
-| 1 | Raspberry Pi (4B / 5 / 3A+ / Zero 2W) | 64-bit OS required |
+| 1 | Raspberry Pi (3, 4, or 5) | 64-bit OS required |
 | 1 | Micro SD card (≥32 GB) | |
 | 1 | USB lavalier microphone | Place in a window or mount outside |
 | 1 | Pi power supply | |
+
+**Hardware notes**
+- **Pi 5 / Pi 4 (≥2 GB RAM)**: full experience — on-demand AI illustration
+  generation enabled, zram sized automatically.
+- **Pi 3 / Pi 4 1 GB / Zero 2W**: works, but the installer automatically
+  enables zram + swap and disables on-demand AI illustration generation
+  (rembg needs memory the Pi 3 can't spare). You still get the 1245 bundled
+  illustrations; set `GENERATE_ILLUSTRATIONS=1` in `birdnet.conf` to opt in.
+- **32-bit OS is not supported** (no tflite wheel for armv7l). Reinstall with
+  the 64-bit Raspberry Pi OS image — the installer will tell you if you forget.
 
 Optional: an [eBird API key](https://ebird.org/api/keygen) to filter species by region.
 

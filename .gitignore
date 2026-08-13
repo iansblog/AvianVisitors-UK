@@ -44,4 +44,3 @@ tflite_runtime-*.whl
 avian/assets/references/    # source/reference imagery
 avian/assets/_legacy/       # superseded assets
 avian/scripts/pregen.log    # generation log
-avian/scripts/species-notes.json  # local working notes

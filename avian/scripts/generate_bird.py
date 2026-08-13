@@ -80,7 +80,6 @@ def remove_background(img_bytes: bytes) -> bytes | None:
         img = Image.open(BytesIO(img_bytes)).convert("RGB")
         session = new_session("u2netp")
         cut = remove(img, session=session)
-
         # Crop to bounding box + margin
         alpha = cut.getchannel("A")
         bbox = alpha.getbbox()
@@ -109,6 +108,24 @@ def remove_background(img_bytes: bytes) -> bytes | None:
 def error_log(msg: str):
     """Log to stderr for PHP error_log capture."""
     print(msg, file=sys.stderr)
+
+
+def low_memory_mb(threshold_mb: int = 500) -> bool:
+    """True when available RAM has dropped below threshold_mb (best-effort).
+
+    rembg needs a few hundred MB on top of the running BirdNET services.
+    If the board is nearly out of memory we skip rembg and serve the raw
+    cream-background render instead - it still blends with the collage.
+    """
+    try:
+        with open("/proc/meminfo") as fh:
+            for line in fh:
+                if line.startswith("MemAvailable:"):
+                    avail_kb = int(line.split()[1])
+                    return avail_kb / 1024 < threshold_mb
+    except (OSError, ValueError):
+        pass
+    return False
 
 
 def main() -> int:
@@ -192,11 +209,24 @@ def main() -> int:
         error_log(f"image too small ({len(raw) if raw else 0} bytes)")
         return 1
 
-    # Remove background
-    png_bytes = remove_background(raw)
-    if not png_bytes:
-        error_log("background removal failed")
-        return 1
+    # Remove background (skip on low memory to avoid OOM).
+    if low_memory_mb():
+        error_log("low memory: skipping rembg, serving raw render")
+        try:
+            from PIL import Image
+            img = Image.open(BytesIO(raw)).convert("RGB")
+            img.thumbnail((800, 800), Image.LANCZOS)
+            buf = BytesIO()
+            img.save(buf, format="PNG", optimize=True)
+            png_bytes = buf.getvalue()
+        except Exception as e:
+            error_log(f"could not normalize raw render: {e}")
+            png_bytes = raw
+    else:
+        png_bytes = remove_background(raw)
+        if not png_bytes:
+            error_log("background removal failed")
+            return 1
 
     # Write output
     out_path.parent.mkdir(parents=True, exist_ok=True)

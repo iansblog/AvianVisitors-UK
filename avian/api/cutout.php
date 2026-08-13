@@ -6,10 +6,14 @@
 //   2. ../assets/cutouts/<slug>.png         (background-removed photo)
 //   3. cached rembg of a Wikipedia photo at $HOME/BirdSongs/Extracted/cutouts/
 //   4. fresh Wikipedia -> rembg -> cache (skipped if rembg-cli missing)
-//   5. AI-generated illustration via free.ai (with retry + rate-limit backoff)
+// 5. AI-generated illustration via free.ai (with retry + rate-limit backoff)
 //
 // The frontend's <img src> points here for every species - bundled
 // hits return instantly; cold misses fall through to the dynamic path.
+//
+// On-demand steps 4-5 (Wikipedia + rembg, and AI generation) are gated by
+// GENERATE_ILLUSTRATIONS in birdnet.conf. The installer sets it to 0 on
+// low-RAM boards (Pi 3, Zero 2W) where rembg could OOM the system.
 //
 // Default LAN deploy ships without auth. To expose publicly, gate
 // /avian/api/* with basic_auth in your Caddyfile - see avian/forwarding/.
@@ -76,9 +80,23 @@ if (is_file($cachePath) && filesize($cachePath) > 1024) {
     serve_png($cachePath);
 }
 
-// 4. Fresh Wikipedia fetch + rembg. Only if rembg-cli is available.
+// On-demand fallback steps (4 + 5) can be disabled from birdnet.conf via
+// GENERATE_ILLUSTRATIONS (the installer turns it off on low-RAM boards).
+$genEnabled = true;
+$confPath = dirname(__DIR__, 2) . '/birdnet.conf';
+if (is_readable($confPath)) {
+    foreach (file($confPath, FILE_IGNORE_NEW_LINES) as $line) {
+        if (str_starts_with($line, 'GENERATE_ILLUSTRATIONS=')) {
+            $genEnabled = (int)trim(substr($line, strlen('GENERATE_ILLUSTRATIONS='))) === 1;
+            break;
+        }
+    }
+}
+
+// 4. Fresh Wikipedia fetch + rembg. Only if rembg-cli is available and
+//    on-demand generation is enabled.
 $rembg = '/usr/local/bin/rembg-cli';
-if (is_executable($rembg)) {
+if ($genEnabled && is_executable($rembg)) {
     if (!is_dir($cacheDir)) @mkdir($cacheDir, 0755, true);
 
     $ua = getenv('AV_USER_AGENT') ?: 'AvianVisitors/1.0 (+https://github.com/Twarner491/AvianVisitors)';
@@ -159,10 +177,12 @@ if (is_executable($rembg)) {
 //    Long timeout (120s) because generation is slow; generous retry
 //    backoff respects free.ai rate limits.
 $genScript = dirname(__DIR__) . "/scripts/generate_bird.py";
-// Use the venv Python which has rembg installed
-$python = '/home/pi/avianvisitors-uk-assets/.venv/bin/python3';
+// Locate a Python with rembg installed. The installer creates
+// avian/scripts/.venv; fall back to python3 on PATH (no rembg = degrade).
+$python = dirname(__DIR__) . '/scripts/.venv/bin/python3';
+if (!is_file($python)) $python = '/home/pi/avianvisitors-uk-assets/.venv/bin/python3';
 if (!is_file($python)) $python = 'python3';
-if (is_file($genScript) && is_executable($genScript)) {
+if ($genEnabled && is_file($genScript) && is_executable($genScript)) {
     if (!is_dir($cacheDir)) @mkdir($cacheDir, 0755, true);
 
     $com = str_replace('_', ' ', $sci);  // fallback common name = latinised

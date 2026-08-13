@@ -8,6 +8,12 @@
 # passwordless sudo:
 #
 #   curl -s https://raw.githubusercontent.com/iansblog/AvianVisitors-UK/main/newinstaller.sh | bash
+#
+# Hardware coverage:
+#   - Raspberry Pi 3, 4 and 5 (64-bit OS required)
+#   - x86_64 (VM / desktop) installs are supported too
+#   - < 2 GB RAM: enables zram + swap and disables on-demand AI
+#     illustration generation to keep the system stable on a Pi 3.
 
 set -e
 
@@ -16,9 +22,37 @@ if [ "$EUID" == 0 ]; then
   exit 1
 fi
 
-if [ "$(uname -m)" != "aarch64" ] && [ "$(uname -m)" != "x86_64" ]; then
-  echo "AvianVisitors-UK requires a 64-bit OS."
-  echo "Detected: $(uname -m)"
+# ------------------------------- Hardware detection --------------------------
+ARCH=$(uname -m)
+PI_MODEL="unknown"
+[ -r /proc/device-tree/model ] && PI_MODEL=$(tr -d '\0' < /proc/device-tree/model)
+TOTAL_RAM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 0)
+TOTAL_RAM_MB=${TOTAL_RAM_MB:-0}
+
+echo ""
+echo "=== AvianVisitors-UK hardware report ==="
+echo "  Model : ${PI_MODEL}"
+echo "  Arch  : ${ARCH}"
+echo "  RAM   : ${TOTAL_RAM_MB} MB"
+echo "========================================"
+echo ""
+
+# 32-bit boards cannot run the tflite wheel. Give actionable guidance for
+# armv7l (Pi 2/3 running 32-bit OS) instead of a generic failure message.
+if [ "$ARCH" == "armv7l" ] || [ "$ARCH" == "armv6l" ]; then
+  echo "You are running a 32-bit operating system ($ARCH)."
+  echo "AvianVisitors-UK requires a 64-bit OS - the tflite runtime has no"
+  echo "32-bit ARM build for Python 3.10+."
+  echo ""
+  echo "Raspberry Pi 3, 4 and 5 all support 64-bit. Reinstall with the"
+  echo "64-bit Raspberry Pi OS image (Raspberry Pi Imager -> Operating System"
+  echo "-> Raspberry Pi OS (64-bit)) and re-run this installer."
+  exit 1
+fi
+
+if [ "$ARCH" != "aarch64" ] && [ "$ARCH" != "x86_64" ]; then
+  echo "Unsupported architecture: $ARCH"
+  echo "AvianVisitors-UK supports aarch64 (Raspberry Pi 3/4/5) and x86_64."
   exit 1
 fi
 
@@ -52,6 +86,18 @@ if [ -n "$PACKAGES_MISSING" ]; then
   sudo apt-get -y install $PACKAGES_MISSING
 fi
 
+# < 2 GB RAM (Pi 3 / Zero 2W): enable zram + swap and keep the heavy
+# on-demand AI generation disabled so rembg cannot OOM the system.
+# Users can opt back in via GENERATE_ILLUSTRATIONS=1 in birdnet.conf.
+export LOW_RAM=0
+if [ "$TOTAL_RAM_MB" -lt 2048 ]; then
+  export LOW_RAM=1
+  echo "Detected ${TOTAL_RAM_MB} MB RAM."
+  echo "Enabling zram + swap and disabling on-demand AI illustration"
+  echo "generation (set GENERATE_ILLUSTRATIONS=1 in birdnet.conf to re-enable)."
+  echo ""
+fi
+
 # Clone into the standard BirdNET-Pi directory (upstream scripts hardcode this path)
 INSTALL_DIR="${HOME}/BirdNET-Pi"
 REPO_URL="https://github.com/iansblog/AvianVisitors-UK.git"
@@ -72,6 +118,28 @@ git clone -b "$BRANCH" --depth=1 "$REPO_URL" "$INSTALL_DIR" || {
 # Run the BirdNET-Pi installer (handles system deps, services, venv, etc.)
 "$INSTALL_DIR/scripts/install_birdnet.sh"
 if [ ${PIPESTATUS[0]} -eq 0 ]; then
+  # Low-RAM tuning after the core install so swap/zram exist before the
+  # analysis service starts churning.
+  if [ "$LOW_RAM" == "1" ]; then
+    echo "Applying low-RAM tuning (zram + swap)..."
+    "$INSTALL_DIR/scripts/install_zram_service.sh" || echo "zram setup failed (non-fatal)"
+    if command -v dphys-swapfile >/dev/null 2>&1; then
+      sudo sed -i 's/^#\?CONF_SWAPSIZE=.*/CONF_SWAPSIZE=1024/' /etc/dphys-swapfile || true
+      sudo dphys-swapfile setup && sudo dphys-swapfile swapon || echo "swap resize failed (non-fatal)"
+    fi
+  fi
+
+  # Set up the illustration venv (rembg + Pillow) unless low-RAM. The
+  # system python is PEP 668 managed on Bookworm+, so a venv is required.
+  if [ "$LOW_RAM" != "1" ] && [ -f "$INSTALL_DIR/avian/scripts/requirements.txt" ]; then
+    echo "Setting up illustration venv (rembg + onnxruntime)..."
+    if [ ! -d "$INSTALL_DIR/avian/scripts/.venv" ]; then
+      python3 -m venv "$INSTALL_DIR/avian/scripts/.venv"
+    fi
+    "$INSTALL_DIR/avian/scripts/.venv/bin/pip" install --upgrade pip >/dev/null 2>&1 || true
+    "$INSTALL_DIR/avian/scripts/.venv/bin/pip" install -r "$INSTALL_DIR/avian/scripts/requirements.txt" || echo "illustration deps failed (non-fatal)"
+  fi
+
   echo ""
   echo "============================================"
   echo "  AvianVisitors-UK installed successfully!"

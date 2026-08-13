@@ -19,6 +19,13 @@ else
   LONGITUDE=-0.1250
 fi
 
+# Default for on-demand AI illustration generation: 0 on low-RAM devices.
+if [ "${LOW_RAM:-0}" == "1" ]; then
+  GENERATE_ILLUSTRATIONS_DEFAULT=0
+else
+  GENERATE_ILLUSTRATIONS_DEFAULT=1
+fi
+
 install_config() {
   cat << EOF > $birdnet_conf
 ################################################################################
@@ -47,6 +54,14 @@ LONGITUDE=$LONGITUDE
 MODEL=BirdNET_GLOBAL_6K_V2.4_Model_FP16
 SF_THRESH=0.03
 DATA_MODEL_VERSION=1
+
+#-------------------  On-demand AI Illustration Generation --------------------#
+## When a detected species has no bundled kachō-e illustration, cutout.php
+## can generate one on the fly via free.ai + rembg. This needs ~2 GB free
+## RAM to run safely. It defaults to 0 on low-RAM devices (Pi 3, Zero 2W)
+## and 1 elsewhere. Flip it to 1 to enable on a Pi 3 (not recommended).
+
+GENERATE_ILLUSTRATIONS=$GENERATE_ILLUSTRATIONS_DEFAULT
 
 #---------------------  BirdWeather Station Information -----------------------#
 #_____________The variable below can be set to have your BirdNET-Pi____________#
