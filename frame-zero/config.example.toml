@@ -1,0 +1,40 @@
+# AvianVisitors frame-zero configuration.
+# install.sh writes ~/avianvisitors-frame/frame-zero/config.toml from a copy of
+# this; edit that file (not this example) and restart the service:
+#   sudo systemctl restart birdframe-zero
+
+# Where the BirdNET-Pi lives. .local usually works on a home network; if the
+# Zero can't resolve it, put the Pi's IP address here instead, e.g.
+#   base_url = "http://192.168.1.50"
+base_url = "http://birdnet.local"
+
+# The short-URL time slots to cycle through, in order.
+windows = ["all", "today"]
+
+# Seconds each image stays on the panel before the next is fetched and shown.
+interval = 300
+
+# The collage is requested at the panel's native size (no client-side crop,
+# the server lays the collage out for this aspect). Raise these only if you
+# really want to fetch a bigger PNG; cycle.py then centre-crops it to the panel.
+fetch_w = 800
+fetch_h = 480
+
+# Panel pixels. Do not change these for an Inky Impression 7.3".
+width = 800
+height = 480
+
+# 7-ink palette blend: 0 = muted, 1 = full colour.
+saturation = 0.5
+
+# Flip the image if the panel is hung the other way up.
+# h_flip = false
+# v_flip = false
+
+# Most Inky Impression 7.3" boards carry an EEPROM that the driver auto-detects
+# over I2C, so no pins are needed. Pre-EEPROM boards are not auto-detected: set
+# all four pins explicitly (BCM numbering, the classic 7.3" wiring) instead.
+# cs_pin = 8
+# dc_pin = 24
+# reset_pin = 25
+# busy_pin = 17

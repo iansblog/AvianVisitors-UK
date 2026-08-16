@@ -146,7 +146,10 @@
   }
   applyTheme(readLS('bird:theme', 'light'));
   var winBtns = [].slice.call(winPick.querySelectorAll('button'));
-  var currentHours = +readLS('bird:window', '24') || 24;
+  // h=0 is the "today" sentinel (calendar day); keep it distinct from a
+  // rolled-to-zero hours value so the picker can restore correctly.
+  var savedWindow = readLS('bird:window', '24');
+  var currentHours = savedWindow === '0' ? 0 : (+savedWindow || 24);
   winBtns.forEach(function (b) {
     b.setAttribute('aria-current', (+b.dataset.h === currentHours) ? 'true' : 'false');
   });
@@ -834,11 +837,13 @@
   }
   // Human label for the current time-window picker selection - replaces
   // a bare "window" with the span it actually covers. Thresholds match
-  // the winPick buttons (1H / 12H / 24H / 7D / ALL).
+  // the winPick buttons (1H / 12H / 24H / 7D / TODAY / ALL); h=0 is the
+  // "today" sentinel (calendar day 00:00-23:59).
   function windowLabel(h) {
+    if (h === 0) return 'today';
     if (h <= 1) return 'this hour';
     if (h <= 12) return 'past 12h';
-    if (h <= 24) return 'today';
+    if (h <= 24) return 'past 24h';
     if (h <= 168) return 'this week';
     return 'all time';
   }
@@ -852,7 +857,7 @@
     lifelist: null,     // ./avian/api/birdnet-api.php?action=lifelist (every species ever detected)
     timeseries: null,   // ./avian/api/birdnet-api.php?action=timeseries (daily + hourly aggregates)
     firstseen: null,    // ./avian/api/birdnet-api.php?action=firstseen (newest lifelist additions)
-    recent: null,       // ./avian/api/birdnet-api.php?action=recent&hours=N (refetched on picker change)
+    recent: null,       // ./avian/api/birdnet-api.php?action=recent&hours=N (or &today=1; refetched on picker change)
   };
 
   // Derived chart arrays, backfilled so 30 buckets always exist.
@@ -868,6 +873,13 @@
   function fetchJson(url) {
     return fetch(url, { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); });
+  }
+
+  // URL for the recent-species window. h=0 maps to the calendar-day
+  // "today" endpoint; everything else is a rolling hours window.
+  function recentUrl(h) {
+    return './avian/api/birdnet-api.php?action=recent'
+      + (h === 0 ? '&today=1' : '&hours=' + h);
   }
 
   function backfillDaily(daily, days) {
@@ -1167,10 +1179,15 @@
 
     // A species is a "lifer" in the current view if its all-time first
     // detection falls inside the selected window - i.e. it was newly added
-    // to the life list this 1h / 12h / 24h / 7d. Never shown for the ALL
-    // window (every species would qualify against an open-ended span).
+    // to the life list this 1h / 12h / 24h / 7d / today. Never shown for
+    // the ALL window (every species would qualify against an open-ended
+    // span).
     var now = Date.now();
-    var windowStartMs = now - currentHours * 3600000;
+    // The "today" window starts at local midnight, not "now" (a rolling
+    // zero-hour span would exclude everything).
+    var windowStartMs = currentHours === 0
+      ? new Date(now).setHours(0, 0, 0, 0)
+      : now - currentHours * 3600000;
     grid.innerHTML = species.map(function (s) {
       var total = +s.n || 0;
       var win = winBySci[s.sci] || 0;
@@ -1368,7 +1385,7 @@
     // lands later - we discard the stale response so the collage
     // never reverts to a different window.
     var forHours = currentHours;
-    return fetchJson('./avian/api/birdnet-api.php?action=recent&hours=' + forHours)
+    return fetchJson(recentUrl(forHours))
       .then(function (j) {
         if (forHours !== currentHours) return; // window changed mid-flight
         DATA.recent = j; renderWindowDependent(animate);
@@ -1382,7 +1399,7 @@
       fetchJson('./avian/api/birdnet-api.php?action=lifelist').catch(function () { return null; }),
       fetchJson('./avian/api/birdnet-api.php?action=timeseries&days=30').catch(function () { return null; }),
       fetchJson('./avian/api/birdnet-api.php?action=firstseen&limit=10').catch(function () { return null; }),
-      fetchJson('./avian/api/birdnet-api.php?action=recent&hours=' + forHours).catch(function () { return null; }),
+      fetchJson(recentUrl(forHours)).catch(function () { return null; }),
     ]).then(function (parts) {
       DATA.stats = parts[0];
       DATA.lifelist = parts[1];

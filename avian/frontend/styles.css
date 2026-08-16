@@ -133,18 +133,19 @@
   .menu-btn:hover { transform: translateY(-1px); }
   .menu-btn:active { transform: translateY(0); }
   /* Compact top bar on mobile - the time-window pill goes from
-     spacious to thumb-tight without losing legibility. */
+     spacious to thumb-tight without losing legibility. Six windows
+     (1H/12H/24H/7D/TODAY/ALL) need tighter letter-spacing to fit. */
   @media (max-width: 700px) {
     .top { top: 12px; padding: 0 12px; }
     .top .window-pick { padding: 3px; }
     .top .window-pick button {
-      font-size: 8.5px; padding: 6px 10px; letter-spacing: 0.12em;
+      font-size: 8.5px; padding: 6px 8px; letter-spacing: 0.08em;
     }
     .menu-btn { font-size: 9px; padding: 6px 11px 5px; letter-spacing: 0.14em; }
     .return-to-atlas { top: 10px; left: 10px; padding: 5px 10px; font-size: 8.5px; }
   }
   @media (max-width: 420px) {
-    .top .window-pick button { font-size: 8px; padding: 5px 7px; letter-spacing: 0.08em; }
+    .top .window-pick button { font-size: 8px; padding: 5px 6px; letter-spacing: 0.05em; }
   }
 
   /* ============ Bottom slider - recessed track, raised active pill ============ */

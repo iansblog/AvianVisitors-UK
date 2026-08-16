@@ -1,0 +1,16 @@
+[Unit]
+Description=AvianVisitors frame-zero: cycle /all + /today on the Inky Impression 7.3
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__APP__
+ExecStart=__APP__/.venv/bin/python __APP__/cycle.py --config __APP__/config.toml
+Restart=always
+RestartSec=15
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

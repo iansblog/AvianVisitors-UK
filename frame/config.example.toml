@@ -24,6 +24,34 @@ shoot = true
 
 hours = 24             # window shown on the frame
 
+# --- Panel mode (panel.py, not display.py) -----------------------------------
+# The alternative client: instead of rendering here, it fetches the collage the
+# server already rendered and pushes it to ANY e-ink display.
+# install.sh --panel --width 800 --height 480 writes a config like this.
+#
+# `window` picks a named time slot and is fetched via its short URL
+# (/today, /7d, ...) straight from the server - the e-ink just shows the
+# finished image. Leave it empty ("") to fall back to /avian/api/frame.php
+# with the `hours` window. See frame/panel.py for the full key list.
+# window = "today"     # one of: 1h 12h 24h 7d today all
+# hours = 24
+# orientation = "portrait"  # default size when width/height unset: portrait =
+#                           # 480x800, landscape = 800x480. Explicit width/height
+#                           # always win (each missing side fills from the
+#                           # orientation).
+# width = 800            # native pixels; the collage layout adapts to any size
+# height = 480
+# inks = [[236,234,223],[26,26,28],[165,60,56],[198,176,74],[49,71,130],[58,110,72]]
+#                        # Spectra-6 (Inky Impression 7.3"). Mono: 2 inks, B/W/R: 3.
+# push_command = "sudo ~/my-firmware --image {image}"
+#                        # your firmware, run with the quantised PNG path. Leave
+#                        # unset to drop the PNG in ~/.birdframe/panel.png instead.
+# quiet_start = 0        # same quiet-hours / heal logic as display.py
+# quiet_end = 0
+# heal_hours = 24
+# state = "~/.birdframe/panel-state.json"
+# cache = "~/.birdframe"
+
 # --- Titles and look (used when this Pi renders, i.e. shoot = true) ----------
 shoot_title = "Avian Visitors"
 shoot_subtitle = "Heard Today"

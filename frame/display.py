@@ -44,6 +44,7 @@ DEFAULTS = {
     "zip": "",              # BirdWeather ZIP / postal code (with species_source = "birdweather")
     "bw_days": 7,           # BirdWeather lookback window, in days
     "bw_country": "us",     # geocoder country for the ZIP
+    "window": "",           # "" = rolling hours below; else one of 1h/12h/24h/7d/today/all
     "hours": 24,
     "image": "",            # local PNG written by the shooter
     "image_url": "",        # or a published screenshot URL
@@ -83,8 +84,12 @@ def _bucket(n):
     return 8
 
 
-def fetch_recent(base, hours, timeout, auth=None):
-    url = f"{base.rstrip('/')}/avian/api/birdnet-api.php?action=recent&hours={hours}"
+def fetch_recent(base, hours, timeout, auth=None, today=False):
+    url = f"{base.rstrip('/')}/avian/api/birdnet-api.php?action=recent"
+    if today:
+        url += "&today=1"
+    else:
+        url += f"&hours={hours}"
     req = urllib.request.Request(url, headers={"User-Agent": "AvianVisitors-frame/1.0"})
     if auth:
         req.add_header("Authorization", auth)
@@ -104,7 +109,8 @@ def fetch_species(cfg, auth=None):
     if cfg.get("species_source") == "birdweather":
         import birdweather
         return birdweather.species_for_zip(cfg["zip"], country=cfg["bw_country"], days=cfg["bw_days"])
-    return fetch_recent(cfg["base_url"], cfg["hours"], cfg["timeout"], auth)
+    return fetch_recent(cfg["base_url"], cfg["hours"], cfg["timeout"], auth,
+                        today=cfg.get("window") == "today")
 
 
 # --- image ------------------------------------------------------------------

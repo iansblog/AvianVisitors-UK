@@ -26,6 +26,10 @@ http:// ${BIRDNETPI_URL} {
   handle /Charts/* {
     file_server browse
   }
+  # AvianVisitors frame collages: /1h /12h /24h /7d /today /all serve the
+  # server-rendered collage PNG (avian/api/frame.php) for that time slot.
+  @windows path /1h /12h /24h /7d /today /all
+  rewrite @windows /avian/api/frame.php?window={path}&{query}
   basicauth /views.php?view=File* {
     birdnet ${HASHWORD}
   }
@@ -70,6 +74,10 @@ http:// ${BIRDNETPI_URL} {
   handle /Charts/* {
     file_server browse
   }
+  # AvianVisitors frame collages: /1h /12h /24h /7d /today /all serve the
+  # server-rendered collage PNG (avian/api/frame.php) for that time slot.
+  @windows path /1h /12h /24h /7d /today /all
+  rewrite @windows /avian/api/frame.php?window={path}&{query}
   reverse_proxy /stream localhost:8000
   # AvianVisitors overlay drops an index.html alongside BirdNET-Pi's
   # index.php. The default try_files for php_fastcgi prefers index.php

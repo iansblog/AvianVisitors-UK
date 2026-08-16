@@ -157,13 +157,14 @@ avian/                  # UK illustration pipeline and collage
 ├── api/                # PHP shims (cutout resolver, spectrogram, etc.)
 ├── scripts/            # illustration generation, mask building, prompt
 └── forwarding/         # optional Home Assistant / MQTT / Cloudflare configs
-frame/                  # optional e-ink wall display
+frame/                  # optional e-ink wall display (13.3", Pi 3 A+ / Zero 2 W)
+frame-zero/             # optional e-ink wall display (7.3", Pi Zero V1.1)
 scripts/                # BirdNET-Pi core scripts (analysis, recording, services)
 model/                  # BirdNET model and species labels
 templates/              # systemd service templates
 ```
 
-Everything outside `avian/` and `frame/` is upstream BirdNET-Pi.
+Everything outside `avian/`, `frame/` and `frame-zero/` is upstream BirdNET-Pi.
 
 ---
 
@@ -185,6 +186,23 @@ This project builds on the work of several open-source projects:
 - **[BirdNET](https://github.com/kahst/BirdNET-Analyzer)** by Stefan Kahl — the bird sound classification framework (Cornell Lab of Ornithology)
 - **[rembg](https://github.com/danielgatis/rembg)** — background removal for photo cutouts
 - **[free.ai](https://api.free.ai)** — free SDXL image generation for on-demand illustrations
+
+---
+
+## Wall frame
+
+An optional e-ink display mirrors the birds onto a panel by your window. The frame runs on **its own Raspberry Pi, completely separate from the BirdNET-Pi** that does the listening and analysis — the display Pi just fetches a rendered PNG over your network (Wi-Fi is fine) and shows it, so the busy BirdNET-Pi never needs to be touched once the collage endpoint is up.
+
+The BirdNET-Pi serves the collage as a plain image — `/all`, `/today`, `/1h`, `/12h`, `/24h` and `/7d` all render at any size you ask for. Pick a client for your panel:
+
+| Client | Panel | Display Pi |
+|--------|-------|------------|
+| [`frame/`](frame/README.md) | Inky Impression 13.3" (1600×1200) | Pi 3 A+ / Zero 2 W |
+| [`frame-zero/`](frame-zero/README.md) | Inky Impression 7.3" (800×480) | Pi Zero V1.1 |
+
+Both install with a one-liner and run as a systemd service, re-fetching fresh images on a cycle (default every 5 minutes) so the frame tracks the day. The `frame-zero/` client fetches the collage natively at 800×480 and is light enough for a first-generation Pi Zero.
+
+Each frame can also run off its own BirdNET mic, or standalone from BirdWeather data for any ZIP code with no mic at all (see `frame/`).
 
 ---
 
